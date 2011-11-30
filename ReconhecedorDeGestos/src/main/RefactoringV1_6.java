@@ -26,9 +26,9 @@ public class RefactoringV1_6 extends PApplet {
 	}
 
 	public void draw() {
-		background(0);
-		// fill(0,0,0,50);
-		// rect(0,0,width,height);
+		//background(0);
+		 fill(0,0,0,50);
+		 rect(0,0,width,height);
 		
 		for (Skeleton s: skeletonAnalyzer.getSkels().values()) {
 			drawSkeletonLines(s);

@@ -1,0 +1,29 @@
+package body;
+
+public enum Joint {
+
+	HEAD,
+	NECK,
+	R_COLLAR,
+	R_SHOULDER,
+	R_ELBOW,
+	R_WRIST,
+	R_HAND,
+	R_FINGER,
+	L_COLLAR,
+	L_SHOULDER,
+	L_ELBOW,
+	L_WRIST,
+	L_HAND,
+	L_FINGER,
+	TORSO,
+	R_HIP,
+	R_KNEE,
+	R_ANKLE,
+	R_FOOT,
+	L_HIP,
+	L_KNEE,
+	L_ANKLE,
+	L_FOOT
+	
+}

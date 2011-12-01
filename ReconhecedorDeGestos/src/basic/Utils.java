@@ -42,4 +42,10 @@ public class Utils {
 		main.text(txt, x, y);
 	}
 	
+	public static void writeOnScreen(PApplet main, String txt, float x, float y, int color, int size){
+		main.textFont(main.loadFont("CourierNew36.vlw"), size);
+		main.fill(color);
+		main.text(txt, x, y);
+	}
+	
 }

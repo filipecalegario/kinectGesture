@@ -5,7 +5,7 @@ import processing.core.PVector;
 
 public class Utils {
 	
-	public static final int Z_MULTIPLIER = 100;
+	public static final int Z_MULTIPLIER = 20;
 	public static final int BALL_SIZE = 10;
 
 	

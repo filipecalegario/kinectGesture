@@ -22,28 +22,31 @@ public class RefactoringV1_6 extends PApplet {
 	MusicModule musicModule;
 	SimpleSkeletonAnalyzer skeletonAnalyzer;
 	InteractionStatus iStatus;
-	
+
 	PFont font;
-	
+
 	// Interactions variables
 	private boolean rectDrawStatus;
 	private boolean lockDist;
-	
+
 	InteractionVariables iv;
+	
+	int iSIndex;
 
 	public void setup() {
 		size(screenHeight * 4 / 3 / 2, screenHeight / 2, PConstants.P3D);
 		skeletonAnalyzer = new SimpleSkeletonAnalyzer(this);
 		musicModule = new MusicModule();
 		frameRate(60);
-		this.iStatus = InteractionStatus.HAND_ANGLE;
+		this.iStatus = InteractionStatus.ARM_ANGLE;
 		this.iv = new InteractionVariables();
 		font = loadFont("CourierNew36.vlw");
 	}
 
 	public void draw() {
 		background(0);
-		writeOnScreen("status: " + iStatus.name(), 10, height - 20, color(255,0,255), 15);
+		writeOnScreen("status: " + iStatus.name(), 10, height - 20, color(255,
+				0, 255), 15);
 
 		for (Skeleton s : skeletonAnalyzer.getSkels().values()) {
 			drawSkeletonLines(s);
@@ -62,6 +65,9 @@ public class RefactoringV1_6 extends PApplet {
 			break;
 		case DIRECTIONS:
 			interaction_directions(s);
+			break;
+		case ARM_ANGLE:
+			interaction_armAngle(s);
 			break;
 		default:
 			break;
@@ -115,65 +121,106 @@ public class RefactoringV1_6 extends PApplet {
 		}
 	}
 
-	public void interaction_directions(Skeleton s){
-		
+	public void interaction_directions(Skeleton s) {
+
 		float positionX = s.lHandCoords.x;
 		float positionY = s.lHandCoords.y;
 		float positionZ = s.lHandCoords.z;
-		
+
 		float speedX = positionX - iv.lastPositionX;
 		float speedY = positionY - iv.lastPositionY;
 		float speedZ = positionZ - iv.lastPositionZ;
-		
+
 		float absSpeedX = Math.abs(speedX);
 		float absSpeedY = Math.abs(speedY);
 		float absSpeedZ = Math.abs(speedZ);
-		
+
 		iv.setMaxSpeedX(absSpeedX);
 		iv.setMinSpeedX(absSpeedX);
 		iv.setMaxSpeedY(absSpeedY);
 		iv.setMinSpeedY(absSpeedY);
 		iv.setMaxSpeedZ(absSpeedZ);
 		iv.setMinSpeedZ(absSpeedZ);
-		
-		//writeOnScreen("Speed X =[" + iv.getMinSpeedX() + "][" + iv.getMaxSpeedX() + "]", 10, 40, color(255,0,0), 20);
-		//writeOnScreen("Speed Y =[" + iv.getMinSpeedY() + "][" + iv.getMaxSpeedY() + "]", 10, 60, color(0,255,0), 20);
-		//writeOnScreen("Speed Z =[" + iv.getMinSpeedZ() + "][" + iv.getMaxSpeedZ() + "]", 10, 80, color(0,255,255), 20);
-		
-		if(absSpeedX > 0.01){
-			if(speedX > 0){
-				writeOnScreen("RIGHT!", color(255,0,255));
+
+		// writeOnScreen("Speed X =[" + iv.getMinSpeedX() + "][" +
+		// iv.getMaxSpeedX() + "]", 10, 40, color(255,0,0), 20);
+		// writeOnScreen("Speed Y =[" + iv.getMinSpeedY() + "][" +
+		// iv.getMaxSpeedY() + "]", 10, 60, color(0,255,0), 20);
+		// writeOnScreen("Speed Z =[" + iv.getMinSpeedZ() + "][" +
+		// iv.getMaxSpeedZ() + "]", 10, 80, color(0,255,255), 20);
+
+		if (absSpeedX > 0.01) {
+			if (speedX > 0) {
+				writeOnScreen("RIGHT!", color(255, 0, 255));
 			} else {
-				writeOnScreen("LEFT!", color(255,0,255));
+				writeOnScreen("LEFT!", color(255, 0, 255));
 			}
 		}
-		
-		if(absSpeedY > 0.01){
-			if(speedY > 0){
-				writeOnScreen("UP!", color(255,0,255));
+
+		if (absSpeedY > 0.01) {
+			if (speedY > 0) {
+				writeOnScreen("UP!", color(255, 0, 255));
 			} else {
-				writeOnScreen("DOWN!", color(255,0,255));
+				writeOnScreen("DOWN!", color(255, 0, 255));
 			}
 		}
-		
-		if(absSpeedZ > 0.02){
-			if(speedZ > 0){
-				writeOnScreen("BACKWARD!", color(255,0,255));
+
+		if (absSpeedZ > 0.02) {
+			if (speedZ > 0) {
+				writeOnScreen("BACKWARD!", color(255, 0, 255));
 			} else {
-				writeOnScreen("FORWARD!", color(255,0,255));
+				writeOnScreen("FORWARD!", color(255, 0, 255));
 			}
 		}
-		
+
 		// END =====================
 		iv.lastPositionX = positionX;
 		iv.lastPositionY = positionY;
 		iv.lastPositionZ = positionZ;
+
+	}
+
+	public void interaction_armAngle(Skeleton s) {
+
+		float leftDegree = degreesTwoVectors(s.lHandCoords, s.lElbowCoords, s.lShoulderCoords);
+		float rightDegree = degreesTwoVectors(s.rHandCoords, s.rElbowCoords, s.rShoulderCoords);
+		
+		boolean leftCheck = checkAngle(80, leftDegree, 7);
+		boolean rightCheck = checkAngle(80, rightDegree, 7);
+		
+		PVector screenLElbow = Utils.convertToScreen(this, s.lElbowCoords);
+		PVector screenRElbow = Utils.convertToScreen(this, s.rElbowCoords);
+		
+		drawDetection(screenLElbow, leftCheck);
+		drawDetection(screenRElbow, rightCheck);
 		
 	}
 	
+	private void drawDetection(PVector point, boolean draw){
+		if (draw) {
+			noStroke();
+			fill(0,255,0);
+			ellipseMode(CENTER);
+			ellipse(point.x, point.y, 20, 20);
+			//writeOnScreen("DETECTOU!", color(0, 255, 0));
+		}
+	}
+	
+	private float degreesTwoVectors(PVector a, PVector center, PVector b){
+		PVector aCenter = PVector.sub(a, center);
+		PVector bCenter = PVector.sub(b, center);
+		float theta = PVector.angleBetween(aCenter, bCenter);
+		return degrees(theta);
+	}
+	
+	private boolean checkAngle(float reference, float degrees, float tolerance){
+		float result = Math.abs(reference - degrees);
+		return result < tolerance;
+	}
+
 	@Override
 	public void keyPressed(KeyEvent e) {
-		//println(key);
+		// println(key);
 		switch (key) {
 		case 'a':
 		case 'A':
@@ -183,15 +230,21 @@ public class RefactoringV1_6 extends PApplet {
 		case 'S':
 			iStatus = InteractionStatus.DIRECTIONS;
 			break;
-		case ' ':
+		case 'r':
 			iv.resetSpeeds();
+			break;
+		case ' ':
+			iStatus = InteractionStatus.values()[iSIndex++%InteractionStatus.values().length];
 			break;
 		case CODED:
 			switch (keyCode) {
 			case RIGHT:
-				System.out.println("Speed X =[" + iv.getMinSpeedX() + "][" + iv.getMaxSpeedX() + "]");
-				System.out.println("Speed Y =[" + iv.getMinSpeedY() + "][" + iv.getMaxSpeedY() + "]");
-				System.out.println("Speed Z =[" + iv.getMinSpeedZ() + "][" + iv.getMaxSpeedZ() + "]");
+				System.out.println("Speed X =[" + iv.getMinSpeedX() + "]["
+						+ iv.getMaxSpeedX() + "]");
+				System.out.println("Speed Y =[" + iv.getMinSpeedY() + "]["
+						+ iv.getMaxSpeedY() + "]");
+				System.out.println("Speed Z =[" + iv.getMinSpeedZ() + "]["
+						+ iv.getMaxSpeedZ() + "]");
 				break;
 			default:
 				break;
@@ -242,24 +295,24 @@ public class RefactoringV1_6 extends PApplet {
 		line(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
 	}
 
-	public void writeOnScreen(String txt, float x, float y, int color, int size){
+	public void writeOnScreen(String txt, float x, float y, int color, int size) {
 		textFont(font, size);
 		fill(color);
 		text(txt, x, y);
 	}
-	
-	public void writeOnScreen(String txt, int color){
+
+	public void writeOnScreen(String txt, int color) {
 		textFont(font, 50);
 		float textWidth = textWidth(txt);
 		float textHeight = textAscent();
 		float x = width / 2 - textWidth / 2;
 		float y = height / 2 - textHeight / 2;
-		//fill(127, 50);
-		//rect(x, y, textWidth, textHeight);
+		// fill(127, 50);
+		// rect(x, y, textWidth, textHeight);
 		fill(color);
 		text(txt, x, y);
 	}
-	
+
 	static public void main(String args[]) {
 		PApplet.main(new String[] { "--bgcolor=#000000",
 		// "--present",

@@ -4,5 +4,5 @@ public enum InteractionStatus {
 	NONE,
 	DIRECTIONS,
 	HAND_ANGLE,
-	ARMS_ANGLE
+	ARM_ANGLE
 }

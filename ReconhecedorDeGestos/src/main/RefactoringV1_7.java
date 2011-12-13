@@ -18,7 +18,7 @@ import body.Skeleton;
 /**
  * @author filipecalegario
  */
-public class RefactoringV1_6 extends PApplet {
+public class RefactoringV1_7 extends PApplet {
 
 	MusicModule musicModule;
 	SimpleSkeletonAnalyzer skeletonAnalyzer;

@@ -9,11 +9,16 @@ import music.MusicModule;
 import processing.core.PApplet;
 import processing.core.PConstants;
 import processing.core.PFont;
+import processing.core.PImage;
 import processing.core.PVector;
 import architecture.SimpleSkeletonAnalyzer;
+import basic.Constants;
 import basic.Utils;
 import body.Joint;
 import body.Skeleton;
+import controlP5.*;
+
+import processing.opengl.*;
 
 /**
  * @author filipecalegario
@@ -26,28 +31,52 @@ public class RefactoringV1_7 extends PApplet {
 
 	PFont font;
 
+	ControlP5 controlP5;
+	PImage img;
+	PVector pos;
+	RadioButton r;
+	MultiList l;
+
 	// Interactions variables
 	private boolean rectDrawStatus;
 	private boolean lockDist;
 
 	InteractionVariables iv;
-	
+
 	int iSIndex;
+	
+	float offset = 285;
+	Joint currentJoint = Joint.L_HAND;
+	
+	int eventSelected = Constants.POSITION;
+	
+	int displayWidth = 800;
+	int displayHeight = 600;
 
 	public void setup() {
-		size(screenHeight * 4 / 3 / 2, screenHeight / 2, PConstants.P3D);
+		size((int) (offset + displayWidth + 100), displayHeight, OPENGL);
+		
 		skeletonAnalyzer = new SimpleSkeletonAnalyzer(this);
 		musicModule = new MusicModule();
 		frameRate(60);
-		this.iStatus = InteractionStatus.ARM_ANGLE;
+		this.iStatus = InteractionStatus.VALUES;
 		this.iv = new InteractionVariables();
 		font = loadFont("CourierNew36.vlw");
+		
+		controlP5 = new ControlP5(this);
+		setupControlP5();
 	}
 
 	public void draw() {
 		background(0);
-		writeOnScreen("status: " + iStatus.name(), 10, height - 20, color(255,
-				0, 255), 15);
+		
+		stroke(255);
+		line(offset, 0, offset, height);
+		// fill(255, 0,0, 50);
+		// noStroke();
+		// rect(0, 0, 285, height);
+		writeOnScreen("status: " + iStatus.name(), width - 200, height - 20,
+				color(255, 0, 255), 15);
 
 		for (Skeleton s : skeletonAnalyzer.getSkels().values()) {
 			drawSkeletonLines(s);
@@ -57,6 +86,10 @@ public class RefactoringV1_7 extends PApplet {
 		noStroke();
 		fill(255, 0, 0);
 		ellipse((frameCount * 15) % width, 20, 20, 20);
+		fill(255);
+		noStroke();
+		rect(0, 0, 285, height);
+		image(img, pos.x, pos.y);
 	}
 
 	public void interaction(Skeleton s) {
@@ -65,10 +98,13 @@ public class RefactoringV1_7 extends PApplet {
 			interaction_handAngle(s);
 			break;
 		case DIRECTIONS:
-			interaction_directions(s);
+			interaction_directions(s, currentJoint);
 			break;
 		case ARM_ANGLE:
 			interaction_armAngle(s);
+			break;
+		case VALUES:
+			interaction_values(s, currentJoint);
 			break;
 		default:
 			break;
@@ -122,11 +158,13 @@ public class RefactoringV1_7 extends PApplet {
 		}
 	}
 
-	public void interaction_directions(Skeleton s) {
+	public void interaction_directions(Skeleton s, Joint j) {
 
-		float positionX = s.lHandCoords.x;
-		float positionY = s.lHandCoords.y;
-		float positionZ = s.lHandCoords.z;
+		PVector tracked = getJointFromSkeleton(s, j);
+
+		float positionX = tracked.x;
+		float positionY = tracked.y;
+		float positionZ = tracked.z;
 
 		float speedX = positionX - iv.lastPositionX;
 		float speedY = positionY - iv.lastPositionY;
@@ -152,25 +190,25 @@ public class RefactoringV1_7 extends PApplet {
 
 		if (absSpeedX > 0.01) {
 			if (speedX > 0) {
-				writeOnScreen("RIGHT!", color(255, 0, 255));
+				writeOnScreen("RIGHT", color(255, 0, 255));
 			} else {
-				writeOnScreen("LEFT!", color(255, 0, 255));
+				writeOnScreen("LEFT", color(255, 0, 255));
 			}
 		}
 
 		if (absSpeedY > 0.01) {
 			if (speedY > 0) {
-				writeOnScreen("UP!", color(255, 0, 255));
+				writeOnScreen("DOWN", color(255, 0, 255));
 			} else {
-				writeOnScreen("DOWN!", color(255, 0, 255));
+				writeOnScreen("UP", color(255, 0, 255));
 			}
 		}
 
 		if (absSpeedZ > 0.02) {
 			if (speedZ > 0) {
-				writeOnScreen("BACKWARD!", color(255, 0, 255));
+				writeOnScreen("BACKWARD", color(255, 0, 255));
 			} else {
-				writeOnScreen("FORWARD!", color(255, 0, 255));
+				writeOnScreen("FORWARD", color(255, 0, 255));
 			}
 		}
 
@@ -183,38 +221,86 @@ public class RefactoringV1_7 extends PApplet {
 
 	public void interaction_armAngle(Skeleton s) {
 
-		float leftDegree = degreesTwoVectors(s.lHandCoords, s.lElbowCoords, s.lShoulderCoords);
-		float rightDegree = degreesTwoVectors(s.rHandCoords, s.rElbowCoords, s.rShoulderCoords);
-		
+		float leftDegree = degreesTwoVectors(s.lHandCoords, s.lElbowCoords,
+				s.lShoulderCoords);
+		float rightDegree = degreesTwoVectors(s.rHandCoords, s.rElbowCoords,
+				s.rShoulderCoords);
+
 		boolean leftCheck = checkAngle(80, leftDegree, 7);
 		boolean rightCheck = checkAngle(80, rightDegree, 7);
-		
+
 		PVector screenLElbow = Utils.convertToScreen(this, s.lElbowCoords);
 		PVector screenRElbow = Utils.convertToScreen(this, s.rElbowCoords);
-		
+
 		drawDetection(screenLElbow, leftCheck);
 		drawDetection(screenRElbow, rightCheck);
-		
+
 	}
-	
-	private void drawDetection(PVector point, boolean draw){
+
+	private void drawDetection(PVector point, boolean draw) {
 		if (draw) {
 			noStroke();
-			fill(0,255,0);
+			fill(0, 255, 0);
 			ellipseMode(CENTER);
 			ellipse(point.x, point.y, 20, 20);
-			//writeOnScreen("DETECTOU!", color(0, 255, 0));
+			// writeOnScreen("DETECTOU!", color(0, 255, 0));
 		}
 	}
 	
-	private float degreesTwoVectors(PVector a, PVector center, PVector b){
+	public void interaction_values(Skeleton s, Joint j){
+		
+		fill(255,0,0);
+		ellipse(50,50,200,200);
+		
+		String event = "";
+		float value = 0;
+		
+		switch (eventSelected) {
+		case Constants.POSITION:
+			event = "Position X";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+		case Constants.VELOCITY:
+			event = "Velocity";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+		case Constants.ACCELERATION:
+			event = "Acceleration";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+		case Constants.DISTANCE_TO_HEAD:
+			event = "Dist to Head";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+		case Constants.DISTANCE_TO_TORSO:
+			event = "Dist to Torso";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+		case Constants.ANGLE_BTW_HEAD:
+			event = "Angle Head";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+		case Constants.ANGLE_BTW_TORSO:
+			event = "Angle Torso";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+
+		default:
+			break;
+		}
+		
+		writeOnScreen(event + " = " + value, width - 300, 50,
+				color(255, 0, 0), 20);
+	}
+
+	private float degreesTwoVectors(PVector a, PVector center, PVector b) {
 		PVector aCenter = PVector.sub(a, center);
 		PVector bCenter = PVector.sub(b, center);
 		float theta = PVector.angleBetween(aCenter, bCenter);
 		return degrees(theta);
 	}
-	
-	private boolean checkAngle(float reference, float degrees, float tolerance){
+
+	private boolean checkAngle(float reference, float degrees, float tolerance) {
 		float result = Math.abs(reference - degrees);
 		return result < tolerance;
 	}
@@ -235,7 +321,8 @@ public class RefactoringV1_7 extends PApplet {
 			iv.resetSpeeds();
 			break;
 		case ' ':
-			iStatus = InteractionStatus.values()[iSIndex++%InteractionStatus.values().length];
+			iStatus = InteractionStatus.values()[iSIndex++
+					% InteractionStatus.values().length];
 			break;
 		case CODED:
 			switch (keyCode) {
@@ -251,13 +338,17 @@ public class RefactoringV1_7 extends PApplet {
 				break;
 			}
 			break;
-
+		case 'w':
+			r.activate(1);
+			break;
 		default:
 			break;
 		}
 	}
 
 	private void drawSkeletonLines(Skeleton s) {
+		pushMatrix();
+		translate(offset - 105, 0);
 		PVector head = Utils.convertToScreen(this, s.headCoords);
 		PVector neck = Utils.convertToScreen(this, s.neckCoords);
 		PVector lShoulder = Utils.convertToScreen(this, s.lShoulderCoords);
@@ -287,7 +378,7 @@ public class RefactoringV1_7 extends PApplet {
 		strokeWeight(5);
 		point(rShoulder.x, rShoulder.y, rShoulder.z);
 		point(lShoulder.x, lShoulder.y, lShoulder.z);
-
+		popMatrix();
 		// ellipse(rHand.x, rHand.y, 40, 40);
 		// ellipse(lHand.x, lHand.y, 40, 40);
 	}
@@ -306,15 +397,15 @@ public class RefactoringV1_7 extends PApplet {
 		textFont(font, 50);
 		float textWidth = textWidth(txt);
 		float textHeight = textAscent();
-		float x = width / 2 - textWidth / 2;
+		float x = (800 / 2 - textWidth / 2) + offset;
 		float y = height / 2 - textHeight / 2;
 		// fill(127, 50);
 		// rect(x, y, textWidth, textHeight);
 		fill(color);
 		text(txt, x, y);
 	}
-	
-	public PVector getJointFromSkeleton(Skeleton s, Joint j){
+
+	public PVector getJointFromSkeleton(Skeleton s, Joint j) {
 		PVector result = null;
 		switch (j) {
 		case HEAD:
@@ -368,9 +459,98 @@ public class RefactoringV1_7 extends PApplet {
 		return result;
 	}
 
+	public void setupControlP5() {
+		img = loadImage("drawing.png");
+
+		pos = new PVector(20, 30);
+
+		r = controlP5.addRadioButton("radioButton", (int) pos.x, (int) pos.y);
+		r.setColorForeground(color(120));
+		r.setColorActive(color(255, 0, 255));
+		r.setColorLabel(color(0));
+
+		l = controlP5.addMultiList("myList", (int) pos.x + 55,
+				(int) pos.y + 450, 100, 12);
+		// l.setItemHeight(15);
+		// l.setBarHeight(15);
+
+		// l.captionLabel().toUpperCase(true);
+		// l.captionLabel().set("Options");
+		// l.captionLabel().style().marginTop = 3;
+		// l.valueLabel().style().marginTop = 3;
+
+		Toggle t1 = r.addItem("head", 1);
+		Toggle t2 = r.addItem("neck", 2);
+		Toggle t3 = r.addItem("r_shoulder", 3);
+		Toggle t4 = r.addItem("r_elbow", 4);
+		Toggle t5 = r.addItem("r_hand", 5);
+		Toggle t6 = r.addItem("l_shoulder", 6);
+		Toggle t7 = r.addItem("l_elbow", 7);
+		Toggle t8 = r.addItem("l_hand", 8);
+		Toggle t9 = r.addItem("torso", 9);
+		Toggle t10 = r.addItem("r_hip", 10);
+		Toggle t11 = r.addItem("r_knee", 11);
+		Toggle t12 = r.addItem("r_foot", 12);
+		Toggle t13 = r.addItem("l_hip", 13);
+		Toggle t14 = r.addItem("l_knee", 14);
+		Toggle t15 = r.addItem("l_foot", 15);
+
+		t1.setPosition(105, 45);
+		t2.setPosition(105, 78);
+		t3.setPosition(72, 81);
+		t4.setPosition(32, 144);
+		t5.setPosition(36, 215);
+		t6.setPosition(144, 82);
+		t7.setPosition(185, 139);
+		t8.setPosition(188, 201);
+		t9.setPosition(108, 180);
+		t10.setPosition(81, 221);
+		t11.setPosition(66, 318);
+		t12.setPosition(79, 401);
+		t13.setPosition(141, 219);
+		t14.setPosition(165, 309);
+		t15.setPosition(155, 398);
+
+		l.add("position", Constants.POSITION);
+		l.add("velocity", Constants.VELOCITY);
+		l.add("acceleration", Constants.ACCELERATION);
+		MultiListButton distance = l.add("distance to...", 999);
+		MultiListButton angle = l.add("angle between...", 998);
+		distance.add("head_", Constants.DISTANCE_TO_HEAD).setLabel("head");
+		distance.add("torso_", Constants.DISTANCE_TO_TORSO).setLabel("torso");
+		angle.add("head__", Constants.ANGLE_BTW_HEAD).setLabel("head");
+		angle.add("torso__", Constants.ANGLE_BTW_TORSO).setLabel("torso");
+	}
+
+	public void controlEvent(ControlEvent theEvent) {
+		// print("got an event from "+theEvent.group().name()+"\t");
+		// for (int i=0;i<theEvent.group().arrayValue().length;i++) {
+		// print(int(theEvent.group().arrayValue()[i]));
+		// }
+		// println("\t "+theEvent.group().value());
+		// myColorBackground = color(int(theEvent.group().value()*10));
+		// println(theEvent.controller().name()+" = "+theEvent.value());
+		int value = 0;
+		if(theEvent.isGroup()){
+			//println(theEvent.controller().name()+" = "+theEvent.value());
+			float value2 = theEvent.group().value();
+			//println(theEvent.group().name()+" = "+value2);
+			value = (int) value2;
+			//println(value);
+			Joint joint = Joint.values()[value-1];
+			currentJoint = joint;
+			println(joint.name());
+		} else if(theEvent.isController()){
+			value = (int) theEvent.value();
+			eventSelected = value;
+			println(value);
+		}
+		//println(theEvent);
+	}
+
 	static public void main(String args[]) {
 		PApplet.main(new String[] { "--bgcolor=#000000",
 		// "--present",
-				"--stop-color=#cccccc", "main.RefactoringV1_6" });
+				"--stop-color=#cccccc", "main.RefactoringV1_7" });
 	}
 }

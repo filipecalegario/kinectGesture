@@ -36,13 +36,13 @@ public class RefactoringV1_7 extends PApplet {
 	PImage img;
 	PVector pos;
 	RadioButton r;
-	MultiList l;
+	RadioButton l;
 	RadioButton out;
 	Slider slider1;
 	Slider slider2;
 	Numberbox nb1;
 	Numberbox nb2;
-	
+
 	// Interactions variables
 	private boolean rectDrawStatus;
 	private boolean lockDist;
@@ -58,7 +58,7 @@ public class RefactoringV1_7 extends PApplet {
 
 	float displayWidth = 800;
 	float displayHeight = 600;
-	
+
 	float trackedValue = 0;
 	private int rHandColor;
 	private int lHandColor;
@@ -69,7 +69,7 @@ public class RefactoringV1_7 extends PApplet {
 	private int torsoColor;
 	private int rElbowColor;
 	private int lElbowColor;
-	
+
 	PVector[] tracking;
 
 	public void setup() {
@@ -120,10 +120,10 @@ public class RefactoringV1_7 extends PApplet {
 		output();
 		image(img, pos.x, pos.y);
 	}
-	
-	public void output(){
-		
-		writeResultTab("" + out.value(), color(0,0,0));
+
+	public void output() {
+
+		writeResultTab("" + out.value(), color(0, 0, 0));
 	}
 
 	public void interaction(Skeleton s) {
@@ -405,9 +405,9 @@ public class RefactoringV1_7 extends PApplet {
 		linePVector(lShoulder, torso);
 		linePVector(lShoulder, lElbow);
 		linePVector(lElbow, lHand);
-		
+
 		organizeColors();
-		
+
 		plotPoint(rHand, rHandColor, 15);
 		plotPoint(lHand, lHandColor, 15);
 		plotPoint(head, headColor, 15);
@@ -417,107 +417,107 @@ public class RefactoringV1_7 extends PApplet {
 		plotPoint(torso, torsoColor, 10);
 		plotPoint(rElbow, rElbowColor, 10);
 		plotPoint(lElbow, lElbowColor, 10);
-		
-//		strokeWeight(15);
-//		point(rHand.x, rHand.y, rHand.z);
-//		point(lHand.x, lHand.y, lHand.z);
-//		point(head.x, head.y, head.z);
-//		strokeWeight(10);
-//		point(rShoulder.x, rShoulder.y, rShoulder.z);
-//		point(lShoulder.x, lShoulder.y, lShoulder.z);
-//		point(neck.x, neck.y, neck.z);
-//		point(torso.x, torso.y, torso.z);
-//		point(rElbow.x, rElbow.y, rElbow.z);
-//		point(lElbow.x, lElbow.y, lElbow.z);
+
+		// strokeWeight(15);
+		// point(rHand.x, rHand.y, rHand.z);
+		// point(lHand.x, lHand.y, lHand.z);
+		// point(head.x, head.y, head.z);
+		// strokeWeight(10);
+		// point(rShoulder.x, rShoulder.y, rShoulder.z);
+		// point(lShoulder.x, lShoulder.y, lShoulder.z);
+		// point(neck.x, neck.y, neck.z);
+		// point(torso.x, torso.y, torso.z);
+		// point(rElbow.x, rElbow.y, rElbow.z);
+		// point(lElbow.x, lElbow.y, lElbow.z);
 		// popMatrix();
 		// ellipse(rHand.x, rHand.y, 40, 40);
 		// ellipse(lHand.x, lHand.y, 40, 40);
 	}
-	
-	public void plotPoint(PVector p, int color, int weight){
+
+	public void plotPoint(PVector p, int color, int weight) {
 		stroke(color);
 		strokeWeight(weight);
 		point(p.x, p.y, p.z);
 	}
-	
-	public void organizeColors(){
-		int selectedColor = color(255,0,0);
+
+	public void organizeColors() {
+		int selectedColor = color(255, 0, 0);
 		int notSelectedColor = color(255);
-		if(currentJoint.equals(Joint.HEAD)){
+		if (currentJoint.equals(Joint.HEAD)) {
 			headColor = selectedColor;
 		} else {
 			headColor = notSelectedColor;
 		}
-		
-		if(currentJoint.equals(Joint.NECK)){
+
+		if (currentJoint.equals(Joint.NECK)) {
 			neckColor = selectedColor;
 		} else {
 			neckColor = notSelectedColor;
 		}
 
-		if(currentJoint.equals(Joint.R_SHOULDER)){
+		if (currentJoint.equals(Joint.R_SHOULDER)) {
 			rShouldColor = selectedColor;
 		} else {
 			rShouldColor = notSelectedColor;
 		}
-		
-		if(currentJoint.equals(Joint.R_ELBOW)){
+
+		if (currentJoint.equals(Joint.R_ELBOW)) {
 			rElbowColor = selectedColor;
 		} else {
 			rElbowColor = notSelectedColor;
 		}
 
-		if(currentJoint.equals(Joint.R_HAND)){
+		if (currentJoint.equals(Joint.R_HAND)) {
 			rHandColor = selectedColor;
 		} else {
 			rHandColor = notSelectedColor;
 		}
 
-		if(currentJoint.equals(Joint.L_SHOULDER)){
+		if (currentJoint.equals(Joint.L_SHOULDER)) {
 			lShouldColor = selectedColor;
 		} else {
 			lShouldColor = notSelectedColor;
 		}
-		
-		if(currentJoint.equals(Joint.L_ELBOW)){
+
+		if (currentJoint.equals(Joint.L_ELBOW)) {
 			lElbowColor = selectedColor;
 		} else {
 			lElbowColor = notSelectedColor;
 		}
-		
-		if(currentJoint.equals(Joint.L_HAND)){
+
+		if (currentJoint.equals(Joint.L_HAND)) {
 			lHandColor = selectedColor;
 		} else {
 			lHandColor = notSelectedColor;
 		}
-		
-		if(currentJoint.equals(Joint.TORSO)){
+
+		if (currentJoint.equals(Joint.TORSO)) {
 			torsoColor = selectedColor;
 		} else {
 			torsoColor = notSelectedColor;
 		}
-		
+
 	}
 
 	public void linePVector(PVector v1, PVector v2) {
 		line(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
 	}
-	
-	public void drawTracking(Skeleton s, Joint j){
-		if(tracking == null){
+
+	public void drawTracking(Skeleton s, Joint j) {
+		if (tracking == null) {
 			tracking = new PVector[40];
 		}
-		
+
 		PVector v = convertToScreen(getJointFromSkeleton(s, j));
 		tracking[frameCount % tracking.length] = v;
-		
+
 		for (int i = 0; i < tracking.length; i++) {
 			PVector p = tracking[i];
-			if(p != null){
-				plotPoint(p, color(0,255,0), 10);
+			if (p != null) {
+				plotPoint(p, color(0, 255, 0), 10);
 			}
 		}
-		
+
 	}
 
 	public void writeOnScreen(String txt, float x, float y, int color, int size) {
@@ -617,8 +617,6 @@ public class RefactoringV1_7 extends PApplet {
 		r.setColorActive(color(255, 0, 255));
 		r.setColorLabel(color(0));
 
-		l = controlP5.addMultiList("myList", (int) pos.x + 55,
-				(int) pos.y + 450, 100, 12);
 
 		out = controlP5.addRadioButton("output",
 				(int) (offset + displayWidth + 25), 50);
@@ -636,8 +634,9 @@ public class RefactoringV1_7 extends PApplet {
 		slider1.setColorForeground(color(120));
 		slider1.setColorActive(color(200));
 		slider1.setColorLabel(color(0));
-		
-		slider2 = controlP5.addSlider("slider2", 0, 100, 50, 1110, 200, 100, 20);
+
+		slider2 = controlP5
+				.addSlider("slider2", 0, 100, 50, 1110, 200, 100, 20);
 		// slider1.setNumberOfTickMarks(100);
 		slider2.setLabel("LIMIT");
 		slider2.setSliderMode(Slider.FLEXIBLE);
@@ -651,11 +650,11 @@ public class RefactoringV1_7 extends PApplet {
 		// l.captionLabel().set("Options");
 		// l.captionLabel().style().marginTop = 3;
 		// l.valueLabel().style().marginTop = 3;
-		
+
 		nb1 = controlP5.addNumberbox("nb1", 0, 1110, 315, 50, 20);
 		nb2 = controlP5.addNumberbox("nb2", 100, 1180, 315, 50, 20);
-		
-		//nb1.setDirection(Controller.HORIZONTAL);
+
+		// nb1.setDirection(Controller.HORIZONTAL);
 		nb1.setMultiplier(-1.0f);
 		nb1.setMin(0.0f);
 		nb2.setMultiplier(-1.0f);
@@ -701,15 +700,41 @@ public class RefactoringV1_7 extends PApplet {
 		out2.setPosition(0, 120);
 		out3.setPosition(0, 240);
 
-		l.add("position", Constants.POSITION);
-		l.add("velocity", Constants.VELOCITY);
-		l.add("acceleration", Constants.ACCELERATION);
-		MultiListButton distance = l.add("distance to...", 999);
-		MultiListButton angle = l.add("angle between...", 998);
-		distance.add("head_", Constants.DISTANCE_TO_HEAD).setLabel("head");
-		distance.add("torso_", Constants.DISTANCE_TO_TORSO).setLabel("torso");
-		angle.add("head__", Constants.ANGLE_BTW_HANDS).setLabel("hands");
+//		l = controlP5.addMultiList("myList", (int) pos.x + 55,
+//				(int) pos.y + 450, 100, 12);
+
+		l = controlP5.addRadioButton("myList", (int) pos.x + 55, (int) pos.y + 450);
+		l.setColorForeground(color(120));
+		l.setColorActive(color(0,255,0));
+		l.setColorLabel(color(255));
+		// r.setItemsPerRow(5);
+		l.setSpacingColumn(50);
+
+		addToRadioButton(l, "Position", 1);
+		addToRadioButton(l, "Velocity", 2);
+		addToRadioButton(l, "Acceleration", 3);
+		addToRadioButton(l, "Distance to...", 4);
+		addToRadioButton(l, "Angle between...", 5);
+
+		// l.add("position", Constants.POSITION);
+		// l.add("velocity", Constants.VELOCITY);
+		// l.add("acceleration", Constants.ACCELERATION);
+		// MultiListButton distance = l.add("distance to...", 999);
+		// MultiListButton angle = l.add("angle between...", 998);
+		// distance.add("head_", Constants.DISTANCE_TO_HEAD).setLabel("head");
+		// distance.add("torso_",
+		// Constants.DISTANCE_TO_TORSO).setLabel("torso");
+		// angle.add("head__", Constants.ANGLE_BTW_HANDS).setLabel("hands");
 		// angle.add("torso__", Constants.ANGLE_BTW_TORSO).setLabel("torso");
+	}
+
+	void addToRadioButton(RadioButton theRadioButton, String theName,
+			int theValue) {
+		Toggle t = theRadioButton.addItem(theName, theValue);
+		t.captionLabel().setColorBackground(color(80));
+		t.captionLabel().style().movePadding(2, 0, -1, 2);
+		t.captionLabel().style().moveMargin(-2, 0, 0, -3);
+		t.captionLabel().style().backgroundWidth = 90;
 	}
 
 	public void controlEvent(ControlEvent theEvent) {
@@ -739,22 +764,22 @@ public class RefactoringV1_7 extends PApplet {
 		} else if (theEvent.isController()) {
 			String name = theEvent.controller().name();
 
-			if(name.equals("slider1")){
-				
-			} else if(name.equals("slider2")){
-				
-			} else if(name.equals("slider3")){
-				
-			} else if(name.equals("myList")){
+			if (name.equals("slider1")) {
+
+			} else if (name.equals("slider2")) {
+
+			} else if (name.equals("slider3")) {
+
+			} else if (name.equals("myList")) {
 				value = (int) theEvent.value();
 				eventSelected = value;
 				println(value);
-				
+
 				if (eventSelected == Constants.ANGLE_BTW_HANDS) {
 					this.iStatus = InteractionStatus.HAND_ANGLE;
 				}
-			} 
-			
+			}
+
 		}
 		// println(theEvent);
 	}

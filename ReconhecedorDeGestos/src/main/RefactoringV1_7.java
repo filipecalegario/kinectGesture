@@ -60,6 +60,17 @@ public class RefactoringV1_7 extends PApplet {
 	float displayHeight = 600;
 	
 	float trackedValue = 0;
+	private int rHandColor;
+	private int lHandColor;
+	private int headColor;
+	private int rShouldColor;
+	private int lShouldColor;
+	private int neckColor;
+	private int torsoColor;
+	private int rElbowColor;
+	private int lElbowColor;
+	
+	PVector[] tracking;
 
 	public void setup() {
 		size((int) (offset + displayWidth + 200), (int) displayHeight, OPENGL);
@@ -94,6 +105,7 @@ public class RefactoringV1_7 extends PApplet {
 		for (Skeleton s : skeletonAnalyzer.getSkels().values()) {
 			drawSkeletonLines(s);
 			interaction(s);
+			drawTracking(s, currentJoint);
 		}
 
 		noStroke();
@@ -393,24 +405,119 @@ public class RefactoringV1_7 extends PApplet {
 		linePVector(lShoulder, torso);
 		linePVector(lShoulder, lElbow);
 		linePVector(lElbow, lHand);
-		strokeWeight(15);
-		point(rHand.x, rHand.y, rHand.z);
-		point(lHand.x, lHand.y, lHand.z);
-		point(head.x, head.y, head.z);
-		strokeWeight(10);
-		point(rShoulder.x, rShoulder.y, rShoulder.z);
-		point(lShoulder.x, lShoulder.y, lShoulder.z);
-		point(neck.x, neck.y, neck.z);
-		point(torso.x, torso.y, torso.z);
-		point(rElbow.x, rElbow.y, rElbow.z);
-		point(lElbow.x, lElbow.y, lElbow.z);
+		
+		organizeColors();
+		
+		plotPoint(rHand, rHandColor, 15);
+		plotPoint(lHand, lHandColor, 15);
+		plotPoint(head, headColor, 15);
+		plotPoint(rShoulder, rShouldColor, 10);
+		plotPoint(lShoulder, lShouldColor, 10);
+		plotPoint(neck, neckColor, 10);
+		plotPoint(torso, torsoColor, 10);
+		plotPoint(rElbow, rElbowColor, 10);
+		plotPoint(lElbow, lElbowColor, 10);
+		
+//		strokeWeight(15);
+//		point(rHand.x, rHand.y, rHand.z);
+//		point(lHand.x, lHand.y, lHand.z);
+//		point(head.x, head.y, head.z);
+//		strokeWeight(10);
+//		point(rShoulder.x, rShoulder.y, rShoulder.z);
+//		point(lShoulder.x, lShoulder.y, lShoulder.z);
+//		point(neck.x, neck.y, neck.z);
+//		point(torso.x, torso.y, torso.z);
+//		point(rElbow.x, rElbow.y, rElbow.z);
+//		point(lElbow.x, lElbow.y, lElbow.z);
 		// popMatrix();
 		// ellipse(rHand.x, rHand.y, 40, 40);
 		// ellipse(lHand.x, lHand.y, 40, 40);
 	}
+	
+	public void plotPoint(PVector p, int color, int weight){
+		stroke(color);
+		strokeWeight(weight);
+		point(p.x, p.y, p.z);
+	}
+	
+	public void organizeColors(){
+		int selectedColor = color(255,0,0);
+		int notSelectedColor = color(255);
+		if(currentJoint.equals(Joint.HEAD)){
+			headColor = selectedColor;
+		} else {
+			headColor = notSelectedColor;
+		}
+		
+		if(currentJoint.equals(Joint.NECK)){
+			neckColor = selectedColor;
+		} else {
+			neckColor = notSelectedColor;
+		}
+
+		if(currentJoint.equals(Joint.R_SHOULDER)){
+			rShouldColor = selectedColor;
+		} else {
+			rShouldColor = notSelectedColor;
+		}
+		
+		if(currentJoint.equals(Joint.R_ELBOW)){
+			rElbowColor = selectedColor;
+		} else {
+			rElbowColor = notSelectedColor;
+		}
+
+		if(currentJoint.equals(Joint.R_HAND)){
+			rHandColor = selectedColor;
+		} else {
+			rHandColor = notSelectedColor;
+		}
+
+		if(currentJoint.equals(Joint.L_SHOULDER)){
+			lShouldColor = selectedColor;
+		} else {
+			lShouldColor = notSelectedColor;
+		}
+		
+		if(currentJoint.equals(Joint.L_ELBOW)){
+			lElbowColor = selectedColor;
+		} else {
+			lElbowColor = notSelectedColor;
+		}
+		
+		if(currentJoint.equals(Joint.L_HAND)){
+			lHandColor = selectedColor;
+		} else {
+			lHandColor = notSelectedColor;
+		}
+		
+		if(currentJoint.equals(Joint.TORSO)){
+			torsoColor = selectedColor;
+		} else {
+			torsoColor = notSelectedColor;
+		}
+		
+	}
 
 	public void linePVector(PVector v1, PVector v2) {
 		line(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
+	}
+	
+	public void drawTracking(Skeleton s, Joint j){
+		if(tracking == null){
+			tracking = new PVector[40];
+		}
+		
+		PVector v = convertToScreen(getJointFromSkeleton(s, j));
+		tracking[frameCount % tracking.length] = v;
+		
+		for (int i = 0; i < tracking.length; i++) {
+			PVector p = tracking[i];
+			if(p != null){
+				plotPoint(p, color(0,255,0), 10);
+			}
+		}
+		
 	}
 
 	public void writeOnScreen(String txt, float x, float y, int color, int size) {
@@ -547,6 +654,12 @@ public class RefactoringV1_7 extends PApplet {
 		
 		nb1 = controlP5.addNumberbox("nb1", 0, 1110, 315, 50, 20);
 		nb2 = controlP5.addNumberbox("nb2", 100, 1180, 315, 50, 20);
+		
+		//nb1.setDirection(Controller.HORIZONTAL);
+		nb1.setMultiplier(-1.0f);
+		nb1.setMin(0.0f);
+		nb2.setMultiplier(-1.0f);
+		nb2.setMin(0.0f);
 
 		Toggle t1 = r.addItem("head", 1);
 		Toggle t2 = r.addItem("neck", 2);

@@ -55,6 +55,7 @@ public class RefactoringV1_7 extends PApplet {
 	Joint currentJoint = Joint.L_HAND;
 
 	int eventSelected = Constants.POSITION;
+	private int outputSelected = 0;
 
 	float displayWidth = 800;
 	float displayHeight = 600;
@@ -71,6 +72,8 @@ public class RefactoringV1_7 extends PApplet {
 	private int lElbowColor;
 
 	PVector[] tracking;
+	private float outputValue;
+	private boolean drawTracking = true;
 
 	public void setup() {
 		size((int) (offset + displayWidth + 200), (int) displayHeight, OPENGL);
@@ -102,12 +105,6 @@ public class RefactoringV1_7 extends PApplet {
 		writeOnScreen("status: " + iStatus.name(), offset + displayWidth - 200,
 				height - 20, color(255, 0, 255), 15);
 
-		for (Skeleton s : skeletonAnalyzer.getSkels().values()) {
-			drawSkeletonLines(s);
-			interaction(s);
-			drawTracking(s, currentJoint);
-		}
-
 		noStroke();
 		fill(255, 0, 0);
 		ellipse(((frameCount * 15) % displayWidth) + offset, 20, 20, 20);
@@ -117,13 +114,41 @@ public class RefactoringV1_7 extends PApplet {
 		rect(offset + displayWidth, 0, 200, height);
 		fill(127);
 		rect(1098, 381, 165, 200);
+
+		for (Skeleton s : skeletonAnalyzer.getSkels().values()) {
+			drawSkeletonLines(s);
+			interaction(s);
+			drawTracking(s, currentJoint, drawTracking );
+		}
+
 		output();
 		image(img, pos.x, pos.y);
 	}
 
 	public void output() {
+		switch (outputSelected) {
+		case Constants.OUTPUT_TRIGGER_MORE:
+			if(outputValue > slider1.value()/100.0f){
+				writeResultTab("TRIGGERED", color(0, 0, 0), 25);
+			} else {
+				writeResultTab("NOTHING", color(0, 0, 0), 25);
+			}
+			break;
+		case Constants.OUTPUT_TRIGGER_LESS:
+			if(outputValue < slider1.value()/100.0f){
+				writeResultTab("TRIGGERED", color(0, 0, 0), 25);
+			} else {
+				writeResultTab("NOTHING", color(0, 0, 0), 25);
+			}
+			break;
+		case Constants.OUTPUT_TRACK_MAP:
+			float drawValue = map(outputValue, 0, 1, nb1.value(), nb2.value());
+			writeResultTab("" + drawValue, color(0,0,0), 25);
+			break;
 
-		writeResultTab("" + out.value(), color(0, 0, 0));
+		default:
+			break;
+		}
 	}
 
 	public void interaction(Skeleton s) {
@@ -173,6 +198,7 @@ public class RefactoringV1_7 extends PApplet {
 		}
 
 		float mappedAngle = map(angle, -PI / 2, PI / 2, 0, 1);
+		outputValue = mappedAngle;
 		float colorHue = mappedAngle * 100;
 		// sendCC(3, mappedAngle);
 
@@ -263,12 +289,91 @@ public class RefactoringV1_7 extends PApplet {
 		boolean leftCheck = checkAngle(80, leftDegree, 7);
 		boolean rightCheck = checkAngle(80, rightDegree, 7);
 
+		if(leftCheck && rightCheck){
+			writeResultTab("TRIGGERED", color(0, 0, 0), 25);
+		} else {
+			writeResultTab("NOTHING", color(0, 0, 0), 25);
+		}
+		
 		PVector screenLElbow = convertToScreen(s.lElbowCoords);
 		PVector screenRElbow = convertToScreen(s.rElbowCoords);
 
 		drawDetection(screenLElbow, leftCheck);
 		drawDetection(screenRElbow, rightCheck);
+		
 
+	}
+
+	public void interaction_values(Skeleton s, Joint j) {
+	
+		//fill(255, 0, 0);
+		//ellipse(50, 50, 200, 200);
+	
+		String event = "";
+		float value = 0;
+	
+		switch (eventSelected) {
+		case Constants.POSITION:
+			event = "Position X";
+			value = getJointFromSkeleton(s, j).x;
+			outputValue = value;
+			break;
+		case Constants.VELOCITY:
+			event = "Velocity";
+			PVector tracked = getJointFromSkeleton(s, j);
+	
+			float positionX = tracked.x;
+			float positionY = tracked.y;
+			float positionZ = tracked.z;
+	
+			float speedX = positionX - iv.lastPositionX;
+			float speedY = positionY - iv.lastPositionY;
+			float speedZ = positionZ - iv.lastPositionZ;
+			
+			value = speedX;
+			outputValue = value;
+			
+			// END =====================
+			iv.lastPositionX = positionX;
+			iv.lastPositionY = positionY;
+			iv.lastPositionZ = positionZ;
+			
+			break;
+		case Constants.POSE:
+			event = "Pose";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+		case Constants.DISTANCE_TO_HEAD:
+			event = "Dist to Head";
+			PVector a1 = getJointFromSkeleton(s, j);
+			PVector b1 = getJointFromSkeleton(s, Joint.HEAD);
+			float dist1 = PVector.dist(a1, b1);
+			value = dist1;
+			outputValue = value;
+			break;
+		case Constants.DISTANCE_TO_TORSO:
+			event = "Dist to Torso";
+			PVector a2 = getJointFromSkeleton(s, j);
+			PVector b2 = getJointFromSkeleton(s, Joint.TORSO);
+			float dist2 = PVector.dist(a2, b2);
+			outputValue = dist2;
+			break;
+		case Constants.ANGLE_BTW_HANDS:
+			// Nunca entrar‡ aqui, porque o controlEvent j‡ muda o interaction para HAND_ANGLE
+			event = "Angle Head";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+		case Constants.ANGLE_BTW_TORSO:
+			event = "Angle Torso";
+			value = getJointFromSkeleton(s, j).x;
+			break;
+	
+		default:
+			break;
+		}
+	
+		writeOnScreen(event + " = " + value, displayWidth / 2 + offset, 50,
+				color(255, 0, 0), 20);
 	}
 
 	private void drawDetection(PVector point, boolean draw) {
@@ -279,52 +384,6 @@ public class RefactoringV1_7 extends PApplet {
 			ellipse(point.x, point.y, 20, 20);
 			// writeOnScreen("DETECTOU!", color(0, 255, 0));
 		}
-	}
-
-	public void interaction_values(Skeleton s, Joint j) {
-
-		fill(255, 0, 0);
-		ellipse(50, 50, 200, 200);
-
-		String event = "";
-		float value = 0;
-
-		switch (eventSelected) {
-		case Constants.POSITION:
-			event = "Position X";
-			value = getJointFromSkeleton(s, j).x;
-			break;
-		case Constants.VELOCITY:
-			event = "Velocity";
-			value = getJointFromSkeleton(s, j).x;
-			break;
-		case Constants.ACCELERATION:
-			event = "Acceleration";
-			value = getJointFromSkeleton(s, j).x;
-			break;
-		case Constants.DISTANCE_TO_HEAD:
-			event = "Dist to Head";
-			value = getJointFromSkeleton(s, j).x;
-			break;
-		case Constants.DISTANCE_TO_TORSO:
-			event = "Dist to Torso";
-			value = getJointFromSkeleton(s, j).x;
-			break;
-		case Constants.ANGLE_BTW_HANDS:
-			event = "Angle Head";
-			value = getJointFromSkeleton(s, j).x;
-			break;
-		case Constants.ANGLE_BTW_TORSO:
-			event = "Angle Torso";
-			value = getJointFromSkeleton(s, j).x;
-			break;
-
-		default:
-			break;
-		}
-
-		writeOnScreen(event + " = " + value, displayWidth / 2 + offset, 50,
-				color(255, 0, 0), 20);
 	}
 
 	private float degreesTwoVectors(PVector a, PVector center, PVector b) {
@@ -503,18 +562,18 @@ public class RefactoringV1_7 extends PApplet {
 		line(v1.x, v1.y, v1.z, v2.x, v2.y, v2.z);
 	}
 
-	public void drawTracking(Skeleton s, Joint j) {
-		if (tracking == null) {
-			tracking = new PVector[40];
-		}
-
-		PVector v = convertToScreen(getJointFromSkeleton(s, j));
-		tracking[frameCount % tracking.length] = v;
-
-		for (int i = 0; i < tracking.length; i++) {
-			PVector p = tracking[i];
-			if (p != null) {
-				plotPoint(p, color(0, 255, 0), 10);
+	public void drawTracking(Skeleton s, Joint j, boolean b) {
+		if (b) {
+			if (tracking == null) {
+				tracking = new PVector[40];
+			}
+			PVector v = convertToScreen(getJointFromSkeleton(s, j));
+			tracking[frameCount % tracking.length] = v;
+			for (int i = 0; i < tracking.length; i++) {
+				PVector p = tracking[i];
+				if (p != null) {
+					plotPoint(p, color(0, 255, 0), 10);
+				}
 			}
 		}
 
@@ -538,8 +597,8 @@ public class RefactoringV1_7 extends PApplet {
 		text(txt, x, y);
 	}
 
-	public void writeResultTab(String txt, int color) {
-		textFont(font, 50);
+	public void writeResultTab(String txt, int color, int size) {
+		textFont(font, size);
 		float textWidth = textWidth(txt);
 		float textHeight = textAscent();
 		float x = (165 / 2 - textWidth / 2) + 1098;
@@ -617,7 +676,6 @@ public class RefactoringV1_7 extends PApplet {
 		r.setColorActive(color(255, 0, 255));
 		r.setColorLabel(color(0));
 
-
 		out = controlP5.addRadioButton("output",
 				(int) (offset + displayWidth + 25), 50);
 		out.setColorForeground(color(120));
@@ -627,7 +685,7 @@ public class RefactoringV1_7 extends PApplet {
 		Label label = out.captionLabel();
 		label.setFont(Font.TRUETYPE_FONT);
 
-		slider1 = controlP5.addSlider("slider1", 0, 100, 50, 1110, 80, 100, 20);
+		slider1 = controlP5.addSlider("slider1", 0, 100, 100, 1110, 80, 100, 20);
 		// slider1.setNumberOfTickMarks(100);
 		slider1.setLabel("LIMIT");
 		slider1.setSliderMode(Slider.FLEXIBLE);
@@ -636,7 +694,7 @@ public class RefactoringV1_7 extends PApplet {
 		slider1.setColorLabel(color(0));
 
 		slider2 = controlP5
-				.addSlider("slider2", 0, 100, 50, 1110, 200, 100, 20);
+				.addSlider("slider2", 0, 100, 0, 1110, 200, 100, 20);
 		// slider1.setNumberOfTickMarks(100);
 		slider2.setLabel("LIMIT");
 		slider2.setSliderMode(Slider.FLEXIBLE);
@@ -657,8 +715,10 @@ public class RefactoringV1_7 extends PApplet {
 		// nb1.setDirection(Controller.HORIZONTAL);
 		nb1.setMultiplier(-1.0f);
 		nb1.setMin(0.0f);
+		nb1.setMax(100.0f);
 		nb2.setMultiplier(-1.0f);
 		nb2.setMin(0.0f);
+		nb2.setMax(100.0f);
 
 		Toggle t1 = r.addItem("head", 1);
 		Toggle t2 = r.addItem("neck", 2);
@@ -684,6 +744,7 @@ public class RefactoringV1_7 extends PApplet {
 		t6.setPosition(144, 82);
 		t7.setPosition(185, 139);
 		t8.setPosition(188, 201);
+		t8.setState(true);
 		t9.setPosition(108, 180);
 		t10.setPosition(81, 221);
 		t11.setPosition(66, 318);
@@ -700,21 +761,22 @@ public class RefactoringV1_7 extends PApplet {
 		out2.setPosition(0, 120);
 		out3.setPosition(0, 240);
 
-//		l = controlP5.addMultiList("myList", (int) pos.x + 55,
-//				(int) pos.y + 450, 100, 12);
+		// l = controlP5.addMultiList("myList", (int) pos.x + 55,
+		// (int) pos.y + 450, 100, 12);
 
-		l = controlP5.addRadioButton("myList", (int) pos.x + 55, (int) pos.y + 450);
+		l = controlP5.addRadioButton("myList", (int) pos.x + 55,
+				(int) pos.y + 450);
 		l.setColorForeground(color(120));
-		l.setColorActive(color(0,255,0));
+		l.setColorActive(color(0, 255, 0));
 		l.setColorLabel(color(255));
 		// r.setItemsPerRow(5);
 		l.setSpacingColumn(50);
 
-		addToRadioButton(l, "Position", 1);
-		addToRadioButton(l, "Velocity", 2);
-		addToRadioButton(l, "Acceleration", 3);
-		addToRadioButton(l, "Distance to...", 4);
-		addToRadioButton(l, "Angle between...", 5);
+		addToRadioButton(l, "Position", Constants.POSITION);
+		addToRadioButton(l, "Velocity", Constants.VELOCITY);
+		addToRadioButton(l, "Pose", Constants.POSE);
+		addToRadioButton(l, "Distance to...", Constants.DISTANCE_TO_HEAD);
+		addToRadioButton(l, "Angle between...", Constants.ANGLE_BTW_HANDS);
 
 		// l.add("position", Constants.POSITION);
 		// l.add("velocity", Constants.VELOCITY);
@@ -749,16 +811,31 @@ public class RefactoringV1_7 extends PApplet {
 		if (theEvent.isGroup()) {
 			// println(theEvent.controller().name()+" = "+theEvent.value());
 			String name = theEvent.group().name();
+			int value2 = (int) theEvent.group().value();
 			if (name.equals("radioButton")) {
-				float value2 = theEvent.group().value();
 				// println(theEvent.group().name()+" = "+value2);
 				value = (int) value2;
 				// println(value);
 				Joint joint = Joint.values()[value - 1];
 				currentJoint = joint;
 				println(joint.name());
-			} else if (name.equals("out")) {
-				println(theEvent.group().name());
+			} else if (name.equals("output")) {
+				println(theEvent.group().value());
+				outputSelected = value2;
+			} else if (name.equals("myList")) {
+				println(value2);
+				eventSelected = value2;
+				if (eventSelected == Constants.ANGLE_BTW_HANDS) {
+					this.iStatus = InteractionStatus.HAND_ANGLE;
+					this.drawTracking = false;
+				} else if(eventSelected == Constants.POSE) {
+					this.iStatus = InteractionStatus.ARM_ANGLE;
+					this.drawTracking = false;
+					out.deactivateAll();
+				} else {
+					this.iStatus = InteractionStatus.VALUES;
+					this.drawTracking = true;
+				}
 			}
 
 		} else if (theEvent.isController()) {
@@ -768,25 +845,14 @@ public class RefactoringV1_7 extends PApplet {
 
 			} else if (name.equals("slider2")) {
 
-			} else if (name.equals("slider3")) {
-
-			} else if (name.equals("myList")) {
-				value = (int) theEvent.value();
-				eventSelected = value;
-				println(value);
-
-				if (eventSelected == Constants.ANGLE_BTW_HANDS) {
-					this.iStatus = InteractionStatus.HAND_ANGLE;
-				}
 			}
-
 		}
 		// println(theEvent);
 	}
 
 	@Override
 	public void mousePressed() {
-		println(mouseX + ", " + mouseY);
+		// println(mouseX + ", " + mouseY);
 	}
 
 	public PVector convertToScreen(PVector v1) {
